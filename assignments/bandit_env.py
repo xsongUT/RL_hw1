@@ -46,7 +46,7 @@ class BanditEnvironment(gym.Env):
 
         return None, {}
 
-    def _sample_reward(self, action: int) -> bool:
+    def _sample_reward(self, action: int) -> float:
         """
         Samples a reward from the selected arm. r ~ N(Q*(a), 1.0)
 
@@ -57,7 +57,13 @@ class BanditEnvironment(gym.Env):
         ### 1. Sample a reward from the selected arm.
         #       Hint: use np.random.normal()
         #       Hint: np.random.normal() accepts the mean and standard deviation, not the variance.
-        raise NotImplementedError
+        # Sample reward from a normal distribution
+        action_reward_mean = self.Q_star[action]  # self.Q_star is an array and the [a] index is the expected rewards of action a
+        std_dev = 1.0  # Standard deviation of the distribution
+        
+        # Generate the reward
+        reward = np.random.normal(loc=action_reward_mean, scale=std_dev)
+        return reward
 
     def _is_ideal_action(self, action: int) -> bool:
         """
@@ -72,7 +78,13 @@ class BanditEnvironment(gym.Env):
         ### TODO ###
         ### 1. Determine if the selected action is one of the best actions.
         ###    Hint: remember that multiple arms could have the same Q* value (e.g. on the first step, all arms are valid)
-        raise NotImplementedError
+        # Find all indices of the maximum value in the k bandits's current values
+        max_reward = np.max(self.Q_star)
+        max_reward_indices = np.where(self.Q_star == max_reward)[0]
+        # Check if the action is in the returned max_reward_indices
+        return action in max_reward_indices
+        
+        
 
 
     def _walk_all_arms(self):
@@ -84,4 +96,8 @@ class BanditEnvironment(gym.Env):
         ### TODO ###
         ### 1. Add noise to all the arms of the bandit.
         #       Hint: use np.random.normal() again, but with the size parameter this time.
-        raise NotImplementedError
+         # Generate noise with mean=0 and std_dev=0.01 for all arms
+        noise = np.random.normal(loc=0, scale=0.01, size=self.Q_star.shape)
+        
+        # Add noise to Q_star
+        self.Q_star += noise

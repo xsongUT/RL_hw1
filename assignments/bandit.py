@@ -71,7 +71,7 @@ class SampleAverageMethod(ActionValue):
         super().reset()
         self.n = np.zeros(self.k)
 
-    def update(self, a: int, r: float):
+    def update(self, a: int, r: float) -> None:
         """
         Updates the estimated Q value for the selected action using the sample-average method.
 
@@ -82,7 +82,11 @@ class SampleAverageMethod(ActionValue):
         ### TODO ###
         ### 1. Update the number of times the selected action has been selected.
         ### 2. Update the estimated Q value for the selected action using the sample-average method (see equation 2.3)
-        raise NotImplementedError
+        
+        #Update the number of times the selected action has been selected
+        self.n[a]+=1
+        #Update the estimated Q value for the selected action using the sample-average method (see equation 2.3)
+        self.Q_hat[a] = self.Q_hat[a] + (r-self.Q_hat[a])/self.n[a]
 
 
 class ConstantStepSizeMethod(ActionValue):
@@ -101,7 +105,8 @@ class ConstantStepSizeMethod(ActionValue):
         """
         ### TODO ###
         ### 1. Update the estimated Q value for the selected action using the constant step-size method (see equation 2.5)
-        raise NotImplementedError
+        Q_n = self.Q_hat[a]
+        self.Q_hat[a] = Q_n + self.alpha*(r-Q_n)
 
 class BanditSolverHyperparameters(Hyperparameters):
     """Hyperparameters for the bandit solver."""
@@ -173,11 +178,16 @@ class BanditSolver(Solver):
         while not done and not truncated:
             ### TODO ###
             ### 1. Select an action using the agent's policy
+            act = policy.action(_)
             ### 2. Step the bandit environment with the selected action
             ###     Hint: make sure to destructure the step method's return values (next_state, r, done, truncated, info)
+            next_state, r, done, truncated, info = env.step(act)
             ### 3. Update the Q value using the appropriate method
+            method.update(act,r)
 
             rs.append(r)
             best_action_taken.append(info["ideal_action"])
+        # if done or truncated:
+        #     next_state, info = env.reset()
 
         return np.array(rs), np.array(best_action_taken)
